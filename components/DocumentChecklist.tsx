@@ -1,0 +1,306 @@
+
+import React, { useState } from 'react';
+import { TMFDocument } from '../types';
+import { getTMFChecklist } from '../services/geminiService';
+import { ALL_COUNTRIES } from '../constants';
+
+const DocumentChecklist: React.FC = () => {
+  const [selectedCountry, setSelectedCountry] = useState('');
+  const [checklist, setChecklist] = useState<TMFDocument[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
+  // Group checklist by Zone
+  const groupedChecklist = checklist.reduce((acc, item) => {
+    if (!acc[item.zone]) acc[item.zone] = [];
+    acc[item.zone].push(item);
+    return acc;
+  }, {} as Record<string, TMFDocument[]>);
+
+  const sortedZones = Object.keys(groupedChecklist).sort();
+
+  const handleGenerate = async () => {
+    if (!selectedCountry) return;
+    setLoading(true);
+    setError('');
+    setChecklist([]);
+    try {
+      const result = await getTMFChecklist(selectedCountry);
+      if (result.length === 0) {
+          setError('No checklist could be generated. Please try again or verify the API key.');
+      } else {
+          setChecklist(result);
+      }
+    } catch (e) {
+      setError('Failed to generate checklist.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownloadPDF = () => {
+    if (checklist.length === 0) return;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        alert("Please allow popups to download the PDF report.");
+        return;
+    }
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>DIA TMF Country Requirements - ${selectedCountry}</title>
+          <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+            body { font-family: 'Inter', sans-serif; padding: 40px; color: #1e293b; line-height: 1.5; max-width: 800px; margin: 0 auto; }
+            .header { border-bottom: 2px solid #0891b2; padding-bottom: 20px; margin-bottom: 30px; }
+            .header h1 { color: #0f172a; margin: 0 0 5px 0; font-size: 24px; }
+            .header .subtitle { color: #64748b; font-size: 14px; }
+            
+            .zone-section { margin-bottom: 30px; page-break-inside: avoid; }
+            .zone-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #0891b2; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 15px; }
+            
+            .doc-item { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #f1f5f9; }
+            .doc-item:last-child { border-bottom: none; }
+            
+            .doc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; }
+            .doc-title { font-weight: 700; font-size: 14px; color: #334155; }
+            .mandatory-badge { background: #fef2f2; color: #b91c1c; font-size: 10px; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; font-weight: bold; border: 1px solid #fecaca; }
+            
+            .doc-desc { font-size: 13px; color: #64748b; margin-bottom: 5px; }
+            .local-req { background: #ecfeff; color: #155e75; padding: 8px; border-radius: 4px; font-size: 12px; border: 1px solid #cffafe; margin-top: 5px; }
+            
+            .footer { margin-top: 50px; border-top: 1px solid #e2e8f0; padding-top: 20px; font-size: 10px; color: #94a3b8; text-align: center; }
+            
+            @media print {
+                body { padding: 0; margin: 1.5cm; }
+                .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>DIA TMF Reference Model Country Requirements</h1>
+            <div class="subtitle">Jurisdiction: <strong>${selectedCountry}</strong></div>
+          </div>
+          
+          ${sortedZones.map(zone => `
+            <div class="zone-section">
+                <div class="zone-title">${zone}</div>
+                ${groupedChecklist[zone].map(doc => `
+                    <div class="doc-item">
+                        <div class="doc-header">
+                            <div class="doc-title">${doc.documentName}</div>
+                            ${doc.mandatory ? '<span class="mandatory-badge">Mandatory</span>' : ''}
+                        </div>
+                        <div class="doc-desc">${doc.description}</div>
+                        ${doc.localRequirement ? `<div class="local-req"><strong>${selectedCountry} Requirement:</strong> ${doc.localRequirement}</div>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+          `).join('')}
+          
+          <div class="footer">
+            Generated by AIDE-RegGenie System on ${new Date().toLocaleDateString()} <br>
+            Confidential & Proprietary - For Internal Use Only
+          </div>
+
+          <script>
+             setTimeout(() => {
+                window.print();
+             }, 1000);
+          </script>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  };
+
+  const submitFeedback = () => {
+      console.log(`Feedback submitted for ${selectedCountry} TMF Checklist: ${feedbackText}`);
+      setFeedbackSubmitted(true);
+      setTimeout(() => {
+          setFeedbackOpen(false);
+          setFeedbackSubmitted(false);
+          setFeedbackText('');
+      }, 2000);
+  };
+
+  return (
+    <div className="flex flex-col h-full space-y-6">
+      {/* Header / Controls */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <div className="flex flex-col md:flex-row md:items-end gap-4">
+          <div className="flex-1">
+            <label className="block text-sm font-bold text-slate-700 mb-2">Select Country / Jurisdiction</label>
+            <select
+              value={selectedCountry}
+              onChange={(e) => setSelectedCountry(e.target.value)}
+              className="w-full border-slate-300 rounded-lg shadow-sm focus:border-cyan-500 focus:ring-cyan-500"
+            >
+              <option value="">-- Select Country --</option>
+              {ALL_COUNTRIES.map(country => (
+                <option key={country} value={country}>{country}</option>
+              ))}
+            </select>
+          </div>
+          <button
+            onClick={handleGenerate}
+            disabled={!selectedCountry || loading}
+            className="px-6 py-2.5 bg-slate-900 text-white font-bold rounded-lg hover:bg-slate-800 disabled:opacity-50 transition-all shadow-md flex items-center gap-2"
+          >
+            {loading ? (
+                <>
+                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                   Generating Requirements...
+                </>
+            ) : (
+                <>
+                   Generate DIA TMF Requirements
+                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                </>
+            )}
+          </button>
+        </div>
+        <p className="text-xs text-slate-500 mt-3">
+            Generates a checklist aligned with the <strong>DIA TMF Reference Model</strong> and local regulations (e.g., FDA, EMA, PMDA).
+        </p>
+      </div>
+
+      {/* Content Area */}
+      <div className="flex-1 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col relative">
+        {checklist.length > 0 ? (
+          <div className="flex-1 overflow-y-auto p-6">
+             <div className="flex justify-between items-center mb-6 pb-4 border-b border-slate-100">
+                 <div>
+                     <h2 className="text-xl font-bold text-slate-800">DIA TMF Reference Model Country Requirements</h2>
+                     <p className="text-sm text-slate-500">Jurisdiction: <span className="font-bold text-cyan-600">{selectedCountry}</span></p>
+                 </div>
+                 <button 
+                    onClick={handleDownloadPDF}
+                    className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-3 py-2 rounded-lg transition-colors text-sm font-bold"
+                    title="Print Requirements to PDF"
+                 >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    Download PDF
+                 </button>
+             </div>
+
+             <div className="space-y-8">
+                {sortedZones.map(zone => (
+                    <div key={zone} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3 border-b border-slate-100 pb-1">{zone}</h3>
+                        <div className="grid grid-cols-1 gap-3">
+                            {groupedChecklist[zone].map((doc, idx) => (
+                                <div key={idx} className="flex items-start gap-4 p-4 rounded-lg border border-slate-100 hover:border-cyan-200 hover:shadow-sm transition-all bg-slate-50/50">
+                                    <div className={`mt-1 w-5 h-5 rounded border flex items-center justify-center flex-shrink-0 ${doc.mandatory ? 'border-red-300 bg-red-50' : 'border-slate-300 bg-white'}`}>
+                                        {doc.mandatory && <div className="w-2 h-2 bg-red-500 rounded-full"></div>}
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex justify-between items-start">
+                                            <h4 className="font-bold text-slate-800 text-sm">{doc.documentName}</h4>
+                                            {doc.mandatory && <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded uppercase">Mandatory</span>}
+                                        </div>
+                                        <p className="text-xs text-slate-600 mt-1">{doc.description}</p>
+                                        {doc.localRequirement && (
+                                            <div className="mt-2 text-xs bg-cyan-50 text-cyan-800 px-3 py-2 rounded border border-cyan-100 flex items-start gap-2">
+                                                <svg className="w-4 h-4 text-cyan-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                                <span><strong>{selectedCountry} Requirement:</strong> {doc.localRequirement}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                ))}
+             </div>
+
+             {/* Feedback Footer */}
+             <div className="mt-12 pt-6 border-t border-slate-200 flex flex-col items-center text-center">
+                 <p className="text-sm text-slate-600 mb-3">Is this checklist accurate for {selectedCountry}?</p>
+                 <button 
+                    onClick={() => setFeedbackOpen(true)}
+                    className="text-xs font-bold text-cyan-600 hover:text-cyan-800 hover:underline flex items-center gap-1"
+                 >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    Report Inaccuracy
+                 </button>
+             </div>
+          </div>
+        ) : (
+          <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8">
+             {error ? (
+                 <div className="text-center text-red-500">
+                     <svg className="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                     <p>{error}</p>
+                 </div>
+             ) : (
+                 <>
+                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100">
+                        <svg className="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    </div>
+                    <p className="font-medium text-slate-600">No checklist generated yet.</p>
+                    <p className="text-sm mt-1 max-w-sm text-center">Select a country above to generate a tailored DIA TMF Reference Model checklist.</p>
+                 </>
+             )}
+          </div>
+        )}
+
+        {/* Feedback Modal */}
+        {feedbackOpen && (
+            <div className="absolute inset-0 bg-white/90 backdrop-blur-sm z-10 flex items-center justify-center p-6">
+                <div className="bg-white shadow-xl border border-slate-200 rounded-xl p-6 max-w-md w-full animate-in zoom-in-95">
+                    {feedbackSubmitted ? (
+                        <div className="text-center py-8">
+                            <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <h3 className="font-bold text-slate-800">Feedback Received</h3>
+                            <p className="text-sm text-slate-500 mt-1">Thank you for helping improve the regulatory model.</p>
+                        </div>
+                    ) : (
+                        <>
+                            <h3 className="font-bold text-slate-800 mb-2">Report Inaccuracy</h3>
+                            <p className="text-xs text-slate-500 mb-4">
+                                Please describe any inaccuracies (e.g., "Document X is not required in Japan" or "Missing Form Y"). This data is used to refine future generations.
+                            </p>
+                            <textarea
+                                className="w-full border border-slate-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 h-32 resize-none mb-4 bg-slate-50"
+                                placeholder="Describe the correction..."
+                                value={feedbackText}
+                                onChange={(e) => setFeedbackText(e.target.value)}
+                            ></textarea>
+                            <div className="flex justify-end gap-3">
+                                <button 
+                                    onClick={() => setFeedbackOpen(false)}
+                                    className="px-4 py-2 text-slate-600 text-sm font-medium hover:bg-slate-100 rounded-lg transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    onClick={submitFeedback}
+                                    disabled={!feedbackText.trim()}
+                                    className="px-4 py-2 bg-cyan-600 text-white text-sm font-bold rounded-lg hover:bg-cyan-700 disabled:opacity-50 transition-colors"
+                                >
+                                    Submit Feedback
+                                </button>
+                            </div>
+                        </>
+                    )}
+                </div>
+            </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default DocumentChecklist;
