@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { ALL_COUNTRIES } from '../constants';
 import { generateICF, translateDocument } from '../services/geminiService';
@@ -38,7 +37,7 @@ const ICFGenerator: React.FC = () => {
   ];
 
   const LANGUAGES = [
-      'English', 'French', 'German', 'Spanish', 'Chinese', 'Korean', 'Thai', 'Tamil'
+      'English', 'French', 'German', 'Spanish', 'Chinese', 'Traditional Chinese', 'Korean', 'Thai', 'Tamil'
   ];
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, setContent: (text: string) => void, type: 'protocol' | 'template' | 'reg') => {

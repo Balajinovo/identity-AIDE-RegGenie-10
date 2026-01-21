@@ -8,6 +8,8 @@ import ChatAssistant from './components/ChatAssistant';
 import Phase1DoseManagement from './components/Phase1DoseManagement';
 import AgenticMonitoring from './components/AgenticMonitoring';
 import CompetencyDashboard from './components/CompetencyDashboard';
+import RegulatoryDatabase from './components/RegulatoryDatabase';
+import AuditLog from './components/AuditLog';
 import { RegulationEntry, DatabaseFilters, AppTab, TranslationLog } from './types';
 import { getAllRegulations, saveRegulation, updateRegulationInDb } from './services/dbService';
 
@@ -156,6 +158,7 @@ const App: React.FC = () => {
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [userOpenAIKey, setUserOpenAIKey] = useState('');
+  const [regulations, setRegulations] = useState<RegulationEntry[]>([]);
   
   // Shared state for navigation
   const [translationSharedContent, setTranslationSharedContent] = useState<string | undefined>(undefined);
@@ -168,8 +171,8 @@ const App: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
         setIsLoadingData(true);
-        // Only loading to satisfy the data existence check in UI
-        await getAllRegulations();
+        const regs = await getAllRegulations();
+        setRegulations(regs);
         setIsLoadingData(false);
     };
     loadData();
@@ -177,6 +180,21 @@ const App: React.FC = () => {
 
   const handleResumeTranslationTask = (log: TranslationLog) => {
       setTranslationSharedContent(undefined); 
+      setActiveTab('translation');
+  };
+
+  const handleAddRegulation = async (entry: RegulationEntry) => {
+      setRegulations(prev => [entry, ...prev]);
+      await saveRegulation(entry);
+  };
+
+  const handleUpdateRegulation = async (entry: RegulationEntry) => {
+      setRegulations(prev => prev.map(r => r.id === entry.id ? entry : r));
+      await updateRegulationInDb(entry);
+  };
+
+  const handleTranslateFromDb = (content: string) => {
+      setTranslationSharedContent(content);
       setActiveTab('translation');
   };
 
@@ -197,8 +215,10 @@ const App: React.FC = () => {
                 {activeTab === 'translation' && 'Intelligence Translator'}
                 {activeTab === 'translation-metrics' && 'Translation Workflow Dashboard'}
                 {activeTab === 'monitoring-report' && 'Agentic Monitoring Report Generator'}
+                {activeTab === 'requirement-tracking' && 'Requirement Tracking Database'}
                 {activeTab === 'dose-management' && 'Phase-1 Dose Escalation'}
                 {activeTab === 'agentic-monitoring' && 'Agentic Surveillance NOC'}
+                {activeTab === 'audit-log' && 'Compliance Audit Log'}
               </h2>
               <p className="text-sm text-slate-500 font-medium">
                 AIDE - Advanced Intelligence Data Engine for Clinical Development
@@ -228,8 +248,12 @@ const App: React.FC = () => {
                         <TranslationMetrics onAction={handleResumeTranslationTask} />
                     )}
                     {activeTab === 'monitoring-report' && <MonitoringReportGenerator />}
+                    {activeTab === 'requirement-tracking' && (
+                        <RegulatoryDatabase />
+                    )}
                     {activeTab === 'dose-management' && <Phase1DoseManagement />}
                     {activeTab === 'agentic-monitoring' && <AgenticMonitoring />}
+                    {activeTab === 'audit-log' && <AuditLog />}
                 </>
             )}
           </div>

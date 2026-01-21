@@ -1,7 +1,7 @@
 
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, getDocs, doc, setDoc, query, orderBy } from 'firebase/firestore';
-import { RegulationEntry, MonitoringReportLog } from '../types';
+import { RegulationEntry, MonitoringReportLog, AuditEntry } from '../types';
 import { INITIAL_REGULATIONS } from '../constants';
 
 let db: any = null;
@@ -80,6 +80,10 @@ const getGeneric = async (collectionName: string, fallback: any[] = []): Promise
         return localData ? JSON.parse(localData) : fallback;
     }
 };
+
+// Audit Log Persistence
+export const saveAuditEntry = (entry: AuditEntry) => saveGeneric('audit_logs', entry.id, entry);
+export const getAuditLogs = (): Promise<AuditEntry[]> => getGeneric('audit_logs');
 
 // Regulation Specifics
 export const getAllRegulations = () => getGeneric('regulations', INITIAL_REGULATIONS);

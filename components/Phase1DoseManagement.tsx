@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { analyzeDoseEscalation } from '../services/geminiService';
+import { saveAuditEntry } from '../services/dbService';
 
 interface Subject {
   id: string;
@@ -26,6 +27,7 @@ const Phase1DoseManagement: React.FC = () => {
   const [activeStep, setActiveStep] = useState(1);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Form States
   const [studyData, setStudyData] = useState({
@@ -55,17 +57,42 @@ const Phase1DoseManagement: React.FC = () => {
     { id: 7, label: 'AI Decision Summary', frequency: 'DECISION CYCLE' },
   ];
 
-  const handleAddSubject = () => {
-    if (!newSubject.id) return;
+  const validateSubject = () => {
+    const newErrors: Record<string, string> = {};
+    if (!newSubject.id) newErrors.id = "Subject ID required";
+    if (newSubject.age < 18 || newSubject.age > 99) newErrors.age = "Age must be 18-99";
+    if (newSubject.weight <= 0) newErrors.weight = "Invalid weight";
+    if (newSubject.aeGrade < 0 || newSubject.aeGrade > 5) newErrors.aeGrade = "Grade 0-5 required";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleAddSubject = async () => {
+    if (!validateSubject()) return;
+
+    const subjectToRecord = { ...newSubject };
     setStudyData(prev => ({
       ...prev,
-      subjects: [...prev.subjects, { ...newSubject }]
+      subjects: [...prev.subjects, subjectToRecord]
     }));
+
+    // Log the data entry for Audit
+    await saveAuditEntry({
+        id: `AUDIT-${Date.now()}`,
+        timestamp: Date.now(),
+        action: 'SUBJECT_RECORD_CREATED',
+        user: 'Current User',
+        module: 'dose-management',
+        details: `Recorded subject ${subjectToRecord.id} findings at dose level ${subjectToRecord.dose}mg. AE Grade: ${subjectToRecord.aeGrade}, DLT: ${subjectToRecord.dlt}`
+    });
+
     // Reset for next
     setNewSubject({
       id: '', cohort: '1', dose: 0.1, age: 45, sex: 'M', weight: 75, bmi: 24.5, cycle: 1,
       alt: 25, ast: 22, bilirubin: 0.8, creatinine: 0.9, aeGrade: 0, dlt: false
     });
+    setErrors({});
   };
 
   const runAnalysis = async () => {
@@ -73,6 +100,17 @@ const Phase1DoseManagement: React.FC = () => {
     try {
       const result = await analyzeDoseEscalation(studyData);
       setAnalysisResult(result);
+
+      // Log analysis cycle
+      await saveAuditEntry({
+        id: `AUDIT-${Date.now()}`,
+        timestamp: Date.now(),
+        action: 'DOSE_ANALYSIS_PERFORMED',
+        user: 'Current User',
+        module: 'dose-management',
+        details: `Performed AI dose escalation analysis for cohort ${studyData.subjects[studyData.subjects.length-1]?.cohort || 'unknown'}. Result: ${result.recommendation}`
+      });
+
       setActiveStep(7);
     } catch (e) {
       alert("AI Analysis failed. Please check inputs.");
@@ -161,11 +199,13 @@ const Phase1DoseManagement: React.FC = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="flex flex-col gap-1">
                         <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Subject ID</label>
-                        <input type="text" placeholder="e.g., 001-S01" value={newSubject.id} onChange={(e) => setNewSubject({...newSubject, id: e.target.value})} className="border border-slate-200 rounded-lg p-2 text-xs" />
+                        <input type="text" placeholder="e.g., 001-S01" value={newSubject.id} onChange={(e) => setNewSubject({...newSubject, id: e.target.value})} className={`border ${errors.id ? 'border-red-500' : 'border-slate-200'} rounded-lg p-2 text-xs`} />
+                        {errors.id && <span className="text-[8px] text-red-500 font-bold ml-1">{errors.id}</span>}
                     </div>
                     <div className="flex flex-col gap-1">
-                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Cohort #</label>
-                        <input type="number" value={newSubject.cohort} onChange={(e) => setNewSubject({...newSubject, cohort: e.target.value})} className="border border-slate-200 rounded-lg p-2 text-xs" />
+                        <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Age</label>
+                        <input type="number" value={newSubject.age} onChange={(e) => setNewSubject({...newSubject, age: parseInt(e.target.value)})} className={`border ${errors.age ? 'border-red-500' : 'border-slate-200'} rounded-lg p-2 text-xs`} />
+                        {errors.age && <span className="text-[8px] text-red-500 font-bold ml-1">{errors.age}</span>}
                     </div>
                     <div className="flex flex-col gap-1">
                         <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">Dose Level (mg)</label>
@@ -192,7 +232,8 @@ const Phase1DoseManagement: React.FC = () => {
                     </div>
                     <div className="flex flex-col gap-1">
                         <label className="text-[9px] font-bold text-slate-400 uppercase ml-1">AE Grade (0-5)</label>
-                        <input type="number" value={newSubject.aeGrade} onChange={(e) => setNewSubject({...newSubject, aeGrade: parseInt(e.target.value)})} className="border border-slate-200 rounded-lg p-2 text-xs" />
+                        <input type="number" value={newSubject.aeGrade} onChange={(e) => setNewSubject({...newSubject, aeGrade: parseInt(e.target.value)})} className={`border ${errors.aeGrade ? 'border-red-500' : 'border-slate-200'} rounded-lg p-2 text-xs`} />
+                        {errors.aeGrade && <span className="text-[8px] text-red-500 font-bold ml-1">{errors.aeGrade}</span>}
                     </div>
                   </div>
 

@@ -1,5 +1,7 @@
 {
-  "requestFramePermissions": [],
+  "requestFramePermissions": [
+    "microphone"
+  ],
   "name": "AIDE- Clinical Intelligence Jan 2026",
-  "description": ""
+  "description": "Advanced Intelligence Data Engine for Clinical Development and Regulatory Surveillance"
 }

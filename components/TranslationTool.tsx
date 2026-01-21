@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { translateDocument, getAlternateSuggestions } from '../services/geminiService';
 import { TranslationLog, FunctionalGroup, TranslationDocType, TranslationDimension, CorrectionRationale, MQMSeverity, MQMType } from '../types';
@@ -17,7 +16,7 @@ const generateTrackingId = (): string => {
 };
 
 const LANGUAGES = [
-    'English', 'Spanish', 'French', 'German', 'Chinese', 'Japanese', 'Tamil', 
+    'English', 'Spanish', 'French', 'German', 'Chinese', 'Traditional Chinese', 'Japanese', 'Tamil', 
     'Hindi', 'Portuguese', 'Italian', 'Russian', 'Korean', 'Arabic', 'Thai',
     'Vietnamese', 'Turkish', 'Polish', 'Dutch', 'Greek', 'Czech'
 ];
@@ -81,6 +80,26 @@ const TranslationTool: React.FC<{ initialText?: string }> = ({ initialText }) =>
   const COST_PER_1M_TOKENS = 0.75; 
 
   // --- Lifecycle & Side Effects ---
+  useEffect(() => {
+    if (initialText) {
+      setSourcePages([initialText]);
+      setSourceCurrentPage(0);
+      setEditedPages([]);
+      setQcStatus('Draft');
+      setCurrentTrackingId(generateTrackingId());
+      setCurrentLogId(`trans-${Date.now()}`);
+      
+      const words = initialText.split(/\s+/).filter(w => w.length > 0).length;
+      const tokens = Math.round(words * TOKEN_FACTOR);
+      setWordCount(words);
+      setTokenCount(tokens);
+      setEstimatedCost((tokens / 1000000) * COST_PER_1M_TOKENS);
+
+      setSourceLanguage('Analyzing...');
+      detectLanguage(initialText);
+    }
+  }, [initialText]);
+
   useEffect(() => {
     if (initiateTranslation && sourcePages.length > 0 && !isLoading && editedPages.length === 0) {
         handleTranslate();
@@ -269,7 +288,7 @@ const TranslationTool: React.FC<{ initialText?: string }> = ({ initialText }) =>
         const utterance = new SpeechSynthesisUtterance(textToSpeak);
         const localeMap: Record<string, string> = { 
           'English': 'en-US', 'Spanish': 'es-ES', 'French': 'fr-FR', 'German': 'de-DE',
-          'Chinese': 'zh-CN', 'Japanese': 'ja-JP', 'Tamil': 'ta-IN', 'Hindi': 'hi-IN',
+          'Chinese': 'zh-CN', 'Traditional Chinese': 'zh-TW', 'Japanese': 'ja-JP', 'Tamil': 'ta-IN', 'Hindi': 'hi-IN',
           'Portuguese': 'pt-PT', 'Italian': 'it-IT', 'Russian': 'ru-RU', 'Korean': 'ko-KR',
           'Arabic': 'ar-SA', 'Thai': 'th-TH', 'Vietnamese': 'vi-VN', 'Turkish': 'tr-TR',
           'Polish': 'pl-PL', 'Dutch': 'nl-NL', 'Greek': 'el-GR', 'Czech': 'cs-CZ'
@@ -548,7 +567,6 @@ const TranslationTool: React.FC<{ initialText?: string }> = ({ initialText }) =>
                                   <button onClick={() => { window.speechSynthesis.cancel(); setLastCharIndex(0); setIsReading(false); setHighlightedWordIndex(null); }} title="Stop Reading" className="text-red-400 hover:text-red-600 transition-colors"><svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8 7a1 1 0 00-1 1v4a1 1 0 001 1h4a1 1 0 001-1V8a1 1 0 00-1-1H8z" clipRule="evenodd"></path></svg></button>
                               </div>
 
-                              {/* New Export Menu */}
                               <div className="relative">
                                 <button 
                                   onClick={() => setShowExportMenu(!showExportMenu)} 

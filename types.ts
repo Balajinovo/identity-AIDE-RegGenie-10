@@ -134,6 +134,25 @@ export interface RegulationEntry {
   isNew?: boolean;
 }
 
+export interface BuildRequirement {
+  id: string;
+  version: string;
+  timestamp: number;
+  prompt: string;
+  status: 'Implemented' | 'Pending';
+  scope: string[];
+}
+
+export interface AuditEntry {
+  id: string;
+  timestamp: number;
+  action: string;
+  user: string;
+  module: AppTab;
+  details: string;
+  ip?: string;
+}
+
 export interface MonitoringReportLog {
   id: string;
   projectNumber: string;
@@ -151,7 +170,7 @@ export interface MonitoringReportLog {
   };
 }
 
-export type AppTab = 'translation' | 'translation-metrics' | 'monitoring-report' | 'chat' | 'dose-management' | 'agentic-monitoring' | 'competency-dashboard';
+export type AppTab = 'translation' | 'translation-metrics' | 'monitoring-report' | 'requirement-tracking' | 'chat' | 'dose-management' | 'agentic-monitoring' | 'competency-dashboard' | 'audit-log';
 
 export interface AnalysisResult {
   summary: string;

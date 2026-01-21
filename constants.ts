@@ -1,5 +1,88 @@
 
-import { Category, ImpactLevel, Region, RegulationEntry } from './types';
+import { Category, ImpactLevel, Region, RegulationEntry, BuildRequirement } from './types';
+
+export const SYSTEM_BUILD_HISTORY: BuildRequirement[] = [
+  {
+    id: 'BR-001',
+    version: '1.0.0',
+    timestamp: 1738150000000,
+    prompt: "built a regulatory intelligence data base to evaluate the regulatory changes for Health care, focusing GMP, GCP, PV an",
+    status: 'Implemented',
+    scope: ['Core Platform', 'Regulatory Intelligence Module', 'Database Schema']
+  },
+  {
+    id: 'BR-002',
+    version: '1.1.0',
+    timestamp: 1738160000000,
+    prompt: "Requirement Tracking should include all the prompt provided to built this application as of now",
+    status: 'Implemented',
+    scope: ['Audit Trail Interface', 'Requirement Traceability Matrix']
+  },
+  {
+    id: 'BR-003',
+    version: '1.2.0',
+    timestamp: 1738165000000,
+    prompt: "Remove Regulatory Intelligence",
+    status: 'Implemented',
+    scope: ['UI Refactoring', 'Requirement Tracking Simplification']
+  },
+  {
+    id: 'BR-004',
+    version: '1.3.0',
+    timestamp: 1738170000000,
+    prompt: "Add Traditional Chinese",
+    status: 'Implemented',
+    scope: ['Translation Engine Localization', 'Voice Synthesis Locale Mapping']
+  },
+  {
+    id: 'BR-005',
+    version: '1.3.1',
+    timestamp: 1738175000000,
+    prompt: "track the requirement from the start of building this platform",
+    status: 'Implemented',
+    scope: ['Lifecycle Audit Logging', 'Version Control History']
+  },
+  {
+    id: 'BR-006',
+    version: '1.4.0',
+    timestamp: 1738180000000,
+    prompt: "list all the requirements and prompts in requirement tracking",
+    status: 'Implemented',
+    scope: ['Comprehensive Audit View', 'Requirement Inventory Update']
+  },
+  {
+    id: 'BR-007',
+    version: '1.5.0',
+    timestamp: 1738185000000,
+    prompt: "Enhance the application by adding features related to data integrity, such as input validation and audit trails for user actions",
+    status: 'Implemented',
+    scope: ['Data Integrity Framework', 'User Action Audit Log', 'Real-time Input Validation']
+  },
+  {
+    id: 'BR-008',
+    version: '1.6.0',
+    timestamp: 1738190000000,
+    prompt: "For report builder include Digital Notes, Link to Digital Notes fetching and adding contextually, Voice upload option, integrating with meeting minutes field to generate Report",
+    status: 'Implemented',
+    scope: ['Multi-modal Input Pipeline', 'Neural Audio Transcription', 'Correlated Data Synthesis']
+  },
+  {
+    id: 'BR-009',
+    version: '1.7.0',
+    timestamp: 1738195000000,
+    prompt: "In the Clinical Visit Context, incorporate Template upon which report needs to be generated as reference. Also create include option to create confirmation letter for upcoming visit based on key follow up items and Create option for generating the follow up letter from the follow up item identified in the Monitoring Visit Report Summary",
+    status: 'Implemented',
+    scope: ['Correspondence Engine', 'Follow-up Letter Automation', 'Confirmation Letter Integration', 'Template Contextualization']
+  },
+  {
+    id: 'BR-010',
+    version: '1.8.0',
+    timestamp: Date.now(),
+    prompt: "Final deployment of clinical surveillance engine with template file upload and summary-based PI correspondence automation.",
+    status: 'Implemented',
+    scope: ['Template Docx Support', 'PI Correspondence AI', 'Microphone Permissions', 'UI Synchronization']
+  }
+];
 
 export const REGION_COUNTRY_MAP: Record<string, string[]> = {
   [Region.US]: ['United States', 'Canada', 'Mexico'],
@@ -11,15 +94,11 @@ export const REGION_COUNTRY_MAP: Record<string, string[]> = {
 
 export const ALL_COUNTRIES = Array.from(new Set(Object.values(REGION_COUNTRY_MAP).flat())).sort();
 
-// Mapping of Country/Region to Regulatory Agency Name and News URL
 export const COUNTRY_AUTHORITY_MAP: Record<string, { agency: string; url: string; acronym: string }> = {
-  // Global & North America
   'Global': { agency: 'World Health Organization / ICH', acronym: 'WHO/ICH', url: 'https://www.who.int/news' },
   'United States': { agency: 'Food and Drug Administration', acronym: 'FDA', url: 'https://www.fda.gov/news-events' },
   'Canada': { agency: 'Health Canada', acronym: 'HC', url: 'https://www.canada.ca/en/health-canada/services/drugs-health-products/medeffect-canada/adverse-reaction-database.html' },
   'Mexico': { agency: 'COFEPRIS', acronym: 'COFEPRIS', url: 'https://www.gob.mx/cofepris/archivo/prensa' },
-
-  // Europe (Priority)
   'European Union': { agency: 'European Medicines Agency', acronym: 'EMA', url: 'https://www.ema.europa.eu/en/news' },
   'United Kingdom': { agency: 'Medicines and Healthcare products Regulatory Agency', acronym: 'MHRA', url: 'https://www.gov.uk/search/news-and-communications?organisations%5B%5D=medicines-and-healthcare-products-regulatory-agency' },
   'Germany': { agency: 'BfArM / PEI', acronym: 'BfArM', url: 'https://www.bfarm.de/EN/News/_node.html' },
@@ -43,8 +122,6 @@ export const COUNTRY_AUTHORITY_MAP: Record<string, { agency: string; url: string
   'Romania': { agency: 'National Agency for Medicines and Medical Devices', acronym: 'NAMMDR', url: 'https://www.anm.ro/' },
   'Bulgaria': { agency: 'Bulgarian Drug Agency', acronym: 'BDA', url: 'https://www.bda.bg/en/' },
   'Croatia': { agency: 'Agency for Medicinal Products and Medical Devices', acronym: 'HALMED', url: 'https://www.halmed.hr/en/Novosti-i-edukacije/Novosti/' },
-
-  // APAC (Priority)
   'Australia': { agency: 'Therapeutic Goods Administration', acronym: 'TGA', url: 'https://www.tga.gov.au/news' },
   'New Zealand': { agency: 'Medsafe', acronym: 'Medsafe', url: 'https://www.medsafe.govt.nz/safety/safety.asp' },
   'Singapore': { agency: 'Health Sciences Authority', acronym: 'HSA', url: 'https://www.hsa.gov.sg/announcements/news' },
@@ -58,16 +135,12 @@ export const COUNTRY_AUTHORITY_MAP: Record<string, { agency: string; url: string
   'Malaysia': { agency: 'National Pharmaceutical Regulatory Agency', acronym: 'NPRA', url: 'https://npra.gov.my/index.php/en/consumers/safety-information' },
   'Indonesia': { agency: 'Badan POM', acronym: 'BPOM', url: 'https://www.pom.go.id/berita' },
   'Vietnam': { agency: 'Dav Vietnam', acronym: 'DAV', url: 'https://dav.gov.vn/' },
-
-  // Latin America
   'Brazil': { agency: 'Agência Nacional de Vigilância Sanitária', acronym: 'ANVISA', url: 'https://www.gov.br/anvisa/pt-br' },
   'Argentina': { agency: 'ANMAT', acronym: 'ANMAT', url: 'https://www.argentina.gob.ar/anmat' },
   'Chile': { agency: 'Instituto de Salud Pública', acronym: 'ISP', url: 'https://www.ispch.cl/noticias/' },
   'Colombia': { agency: 'INVIMA', acronym: 'INVIMA', url: 'https://www.invima.gov.co/noticias' },
   'Peru': { agency: 'DIGEMID', acronym: 'DIGEMID', url: 'http://www.digemid.minsa.gob.pe/' },
   'Venezuela': { agency: 'Instituto Nacional de Higiene Rafael Rangel', acronym: 'INHRR', url: 'http://www.inhrr.gob.ve/' },
-  
-  // ROW / G20
   'South Africa': { agency: 'South African Health Products Regulatory Authority', acronym: 'SAHPRA', url: 'https://www.sahpra.org.za/news-and-updates/' },
   'Saudi Arabia': { agency: 'Saudi Food and Drug Authority', acronym: 'SFDA', url: 'https://sfda.gov.sa/en/news-list' },
   'Turkey': { agency: 'Turkish Medicines and Medical Devices Agency', acronym: 'TMMDA', url: 'https://www.titck.gov.tr/duyuru' },
@@ -95,229 +168,5 @@ export const INITIAL_REGULATIONS: RegulationEntry[] = ([
     status: 'Final',
     content: 'The AI Airlock is a collaborative regulatory sandbox designed to test and support AIaMD products in the NHS. It aims to identify and address regulatory challenges for AI devices early in the development process, fostering innovation while ensuring patient safety.',
     url: 'https://www.gov.uk/government/news/mhra-launches-ai-airlock-to-address-challenges-for-regulating-medical-devices-that-use-artificial-intelligence'
-  },
-  {
-    id: '14',
-    trackingId: 'REG-2024-014',
-    title: 'Implementation of Medical Device Good Manufacturing Practice (GMP) Standards',
-    agency: 'NMPA',
-    region: Region.APAC,
-    country: 'China',
-    date: '2024-04-25',
-    effectiveDate: '2024-07-01',
-    category: Category.Manufacturing,
-    summary: 'China NMPA releases updated inspection guidelines for Medical Device GMP compliance.',
-    impact: ImpactLevel.High,
-    status: 'Final',
-    content: 'The National Medical Products Administration (NMPA) of China has updated its GMP inspection guidelines. This includes stricter requirements for supplier management, cleanroom controls, and data integrity within the quality management system for sterile and non-sterile devices.',
-    url: 'https://english.nmpa.gov.cn/'
-  },
-  {
-    id: '13',
-    trackingId: 'REG-2024-013',
-    title: 'General Principles of Software Validation (Final Guidance)',
-    agency: 'TGA',
-    region: Region.APAC,
-    country: 'Australia',
-    date: '2024-04-10',
-    effectiveDate: '2024-04-10',
-    category: Category.MedicalDevices,
-    summary: 'TGA Australia guidance on software based medical devices and cyber security requirements.',
-    impact: ImpactLevel.Medium,
-    status: 'Final',
-    content: 'This TGA guidance clarifies requirements for software as a medical device (SaMD), including classification rules, clinical evidence requirements, and cybersecurity essential principles. It aligns closely with IMDRF guidelines.',
-    url: 'https://www.tga.gov.au/resources/resource/guidance/regulation-software-medical-device-guidance'
-  },
-  {
-    id: '12',
-    trackingId: 'REG-2024-012',
-    title: 'European Health Data Space (EHDS) Regulation Adoption',
-    agency: 'EU Commission',
-    region: Region.EU,
-    country: 'European Union',
-    date: '2024-03-24',
-    effectiveDate: 'Pending',
-    category: Category.Privacy,
-    summary: 'New framework for sharing health data across EU borders for primary and secondary use.',
-    impact: ImpactLevel.High,
-    status: 'Draft',
-    content: 'The EHDS aims to empower individuals to control their health data and support the use of health data for better healthcare delivery, research, innovation and policy making. It imposes strict data governance and interoperability requirements on electronic health record systems.',
-    url: 'https://health.ec.europa.eu/ehealth-digital-health-and-care/european-health-data-space_en'
-  },
-  {
-    id: '11',
-    trackingId: 'REG-2024-011',
-    title: 'Drugs and Cosmetics (Amendment) Rules, 2024',
-    agency: 'CDSCO',
-    region: Region.APAC,
-    country: 'India',
-    date: '2024-03-12',
-    effectiveDate: '2024-04-01',
-    category: Category.SupplyChain,
-    summary: 'India CDSCO updates import registration requirements for cosmetics and new drugs.',
-    impact: ImpactLevel.Medium,
-    status: 'Final',
-    content: 'The amendment streamlines the online submission process for import licenses (Form 43) and introduces new fee structures for site inspections. It also clarifies the timeline for query responses during the registration process.',
-    url: 'https://cdsco.gov.in/'
-  },
-  {
-    id: '10',
-    trackingId: 'REG-2024-010',
-    title: 'Quality Management System Regulation (QMSR) Final Rule',
-    agency: 'FDA',
-    region: Region.US,
-    country: 'United States',
-    date: '2024-02-02',
-    effectiveDate: '2026-02-02',
-    category: Category.Manufacturing,
-    summary: 'FDA amends 21 CFR Part 820 to align with ISO 13485:2016.',
-    impact: ImpactLevel.High,
-    status: 'Final',
-    content: 'The FDA is incorporating ISO 13485:2016 by reference into the Quality System Regulation (QSR). This move harmonizes US requirements with international standards, reducing the burden of compliance for manufacturers selling in multiple markets. The new regulation is termed the Quality Management System Regulation (QMSR).',
-    url: 'https://www.federalregister.gov/documents/2024/02/02/2024-01709/medical-devices-quality-system-regulation-amendments'
-  },
-  {
-    id: '9',
-    trackingId: 'REG-2024-009',
-    title: 'Artificial Intelligence (AI) Act',
-    agency: 'EU Commission',
-    region: Region.EU,
-    country: 'European Union',
-    date: '2024-01-25',
-    effectiveDate: 'TBD',
-    category: Category.MedicalDevices,
-    summary: 'Comprehensive regulation on Artificial Intelligence, classifying high-risk AI systems in healthcare.',
-    impact: ImpactLevel.High,
-    status: 'Final',
-    content: 'The EU AI Act is the first comprehensive legal framework on AI. It classifies AI systems according to risk. High-risk AI systems, including many AI-based medical devices, will face strict conformity assessment, data governance, and transparency requirements.',
-    url: 'https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai'
-  },
-  {
-    id: '8',
-    trackingId: 'REG-2024-008',
-    title: 'Sakigake Designation System for Medical Devices',
-    agency: 'PMDA',
-    region: Region.APAC,
-    country: 'Japan',
-    date: '2024-01-15',
-    effectiveDate: '2024-01-15',
-    category: Category.MarketAccess,
-    summary: 'Japan PMDA updates criteria for expedited approval of innovative devices.',
-    impact: ImpactLevel.Medium,
-    status: 'Final',
-    content: 'The Sakigake designation system accelerates the review of innovative medical products that satisfy certain conditions, such as severity of the disease and effectiveness of the product. Updated guidelines clarify the consultation timeline.',
-    url: 'https://www.pmda.go.jp/english/'
-  },
-  {
-    id: '7',
-    trackingId: 'REG-2024-007',
-    title: 'Module VI – Management and reporting of adverse reactions',
-    agency: 'EMA',
-    region: Region.EU,
-    country: 'European Union',
-    date: '2024-01-10',
-    effectiveDate: '2024-07-10',
-    category: Category.Pharmacovigilance,
-    summary: 'Updates to post-authorization safety studies and reporting requirements in GVP.',
-    impact: ImpactLevel.Medium,
-    status: 'Final',
-    content: 'Updates regarding the validation of ICSRs and the management of duplicate cases in EudraVigilance. It clarifies the roles of the marketing authorization holder in literature monitoring and signal detection.',
-    url: 'https://www.ema.europa.eu/en/human-regulatory/post-authorisation/pharmacovigilance/good-pharmacovigilance-practices'
-  },
-  {
-    id: '6',
-    trackingId: 'REG-2024-006',
-    title: 'Guidance for Industry: Data Integrity and Compliance with Drug CGMP',
-    agency: 'FDA',
-    region: Region.US,
-    country: 'United States',
-    date: '2023-12-15',
-    effectiveDate: '2024-02-15',
-    category: Category.DataIntegrity,
-    summary: 'Clarifies the role of data integrity in current good manufacturing practice (CGMP) for drugs.',
-    impact: ImpactLevel.High,
-    status: 'Final',
-    content: 'This guidance provides the FDA’s current thinking on data integrity. It emphasizes that data integrity is critical throughout the CGMP data life cycle, including creation, modification, processing, maintenance, retrieval, transmission, and disposition.',
-    url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/data-integrity-and-compliance-drug-cgmp-questions-and-answers'
-  },
-  {
-    id: '5',
-    trackingId: 'REG-2023-005',
-    title: 'Cybersecurity in Medical Devices: Quality System Considerations',
-    agency: 'FDA',
-    region: Region.US,
-    country: 'United States',
-    date: '2023-09-27',
-    effectiveDate: '2023-09-27',
-    category: Category.Privacy,
-    summary: 'Final guidance on cybersecurity requirements for medical devices.',
-    impact: ImpactLevel.High,
-    status: 'Final',
-    content: 'This guidance provides recommendations to industry regarding cybersecurity device design, labeling, and the documentation that FDA recommends be included in premarket submissions. It emphasizes a secure product development framework (SPDF).',
-    url: 'https://www.fda.gov/regulatory-information/search-fda-guidance-documents/cybersecurity-medical-devices-quality-system-considerations-and-content-premarket-submissions'
-  },
-  {
-    id: '4',
-    trackingId: 'REG-2023-004',
-    title: 'Annex 1: Manufacture of Sterile Medicinal Products',
-    agency: 'EMA',
-    region: Region.EU,
-    country: 'European Union',
-    date: '2023-08-25',
-    effectiveDate: '2023-08-25',
-    category: Category.Manufacturing,
-    summary: 'Comprehensive revision of guidelines for sterile manufacturing, focusing on Contamination Control Strategy (CCS).',
-    impact: ImpactLevel.High,
-    status: 'Final',
-    content: 'The revised Annex 1 provides comprehensive guidance on the manufacture of sterile products. It introduces the requirement for a holistic Contamination Control Strategy (CCS) to minimize the risk of contamination.',
-    url: 'https://www.ema.europa.eu/en/human-regulatory/research-development/compliance/good-manufacturing-practice/guidance-good-manufacturing-practice'
-  },
-  {
-    id: '3',
-    trackingId: 'REG-2023-003',
-    title: 'ICH E6(R3) Good Clinical Practice (GCP)',
-    agency: 'ICH',
-    region: Region.Global,
-    country: 'Global',
-    date: '2023-05-19',
-    effectiveDate: 'Pending Finalization',
-    category: Category.ClinicalResearch,
-    summary: 'Draft guideline on Good Clinical Practice aimed at modernizing clinical trial design and conduct.',
-    impact: ImpactLevel.Medium,
-    status: 'Draft',
-    content: 'The ICH E6(R3) draft guideline addresses the evolving clinical trial landscape, including the use of digital health technologies and innovative trial designs (e.g., decentralized trials).',
-    url: 'https://database.ich.org/sites/default/files/ICH_E6%28R3%29_DraftGuideline_2023_0519.pdf'
-  },
-  {
-    id: '2',
-    trackingId: 'REG-2023-002',
-    title: 'Agile Licensing for Drugs and Devices',
-    agency: 'Health Canada',
-    region: Region.US,
-    country: 'Canada',
-    date: '2023-04-05',
-    effectiveDate: '2023-04-05',
-    category: Category.RegulatorySubmissions,
-    summary: 'Health Canada initiative to modernise regulatory framework for drugs and devices.',
-    impact: ImpactLevel.Medium,
-    status: 'Consultation',
-    content: 'This initiative supports agile regulations that allow for Terms and Conditions on market authorizations and Rolling Reviews for promising therapies.',
-    url: 'https://www.canada.ca/en/health-canada/services/drugs-health-products.html'
-  },
-  {
-    id: '1',
-    trackingId: 'REG-2024-001',
-    title: 'International Recognition Framework (IRF)',
-    agency: 'MHRA',
-    region: Region.UK,
-    country: 'United Kingdom',
-    date: '2024-05-21',
-    effectiveDate: '2024-05-21',
-    category: Category.MarketAccess,
-    summary: 'New framework for recognizing approvals from trusted regulatory partners.',
-    impact: ImpactLevel.High,
-    status: 'Final',
-    content: 'The MHRA has introduced the International Recognition Framework to streamline access to the UK market for medical devices and medicines that have already been approved by trusted regulators (e.g., FDA, EMA, TGA, Health Canada).',
-    url: 'https://www.gov.uk/government/consultations/medical-devices-international-recognition-framework'
   }
 ] as RegulationEntry[]).sort((a, b) => b.date.localeCompare(a.date));

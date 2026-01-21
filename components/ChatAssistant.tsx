@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ChatMessage, GenieFeedback } from '../types';
-import { streamChatResponse, streamOpenAIResponse } from '../services/geminiService';
+import { streamChatResponse } from '../services/geminiService';
 
 // --- Grounding Sources Component ---
 const GroundingSources = ({ metadata }: { metadata: any }) => {
@@ -144,7 +144,6 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({ openaiKey: propOpenaiKey 
   const [activeProvider, setActiveProvider] = useState<'gemini' | 'openai'>('gemini');
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const openaiKey = propOpenaiKey || process.env.openai_api_key;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -189,21 +188,7 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({ openaiKey: propOpenaiKey 
         ));
       });
     } catch (geminiError: any) {
-      if (openaiKey) {
-        setActiveProvider('openai');
-        let fallbackFullText = `[PRIMARY ENGINE LOAD LIMIT REACHED - SWITCHING TO SECONDARY]\n\n`;
-        setMessages(prev => prev.map(m => m.id === modelMsgId ? { ...m, text: fallbackFullText } : m));
-        try {
-          await streamOpenAIResponse(history, userMsg.text, openaiKey, (chunk) => {
-            fallbackFullText += chunk;
-            setMessages(prev => prev.map(m => m.id === modelMsgId ? { ...m, text: fallbackFullText } : m));
-          });
-        } catch (openaiError: any) {
-          setMessages(prev => prev.map(m => m.id === modelMsgId ? { ...m, text: `System connection error. Please retry.` } : m));
-        }
-      } else {
-        setMessages(prev => prev.map(m => m.id === modelMsgId ? { ...m, text: `GxP Genie is currently unavailable.` } : m));
-      }
+      setMessages(prev => prev.map(m => m.id === modelMsgId ? { ...m, text: `GxP Genie is currently unavailable. Error: ${geminiError.message || 'System connection error'}` } : m));
     } finally {
       setIsTyping(false);
     }
@@ -300,7 +285,7 @@ const ChatAssistant: React.FC<ChatAssistantProps> = ({ openaiKey: propOpenaiKey 
       <div className="px-5 py-3 border-b border-slate-100 bg-white flex justify-between items-center z-10 shadow-sm">
           <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                  <div className={`w-2.5 h-2.5 rounded-full animate-pulse shadow-[0_0_8px] ${activeProvider === 'gemini' ? 'bg-cyan-500 shadow-cyan-400' : 'bg-green-500 shadow-green-400'}`}></div>
+                  <div className={`w-2.5 h-2.5 rounded-full animate-pulse shadow-[0_0_8px] bg-cyan-500 shadow-cyan-400`}></div>
                   <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Genie Intelligence Active</span>
               </div>
           </div>
